@@ -1,19 +1,24 @@
-# **🤖 Sentinel AI: Enterprise Code Review Platform**
+# **🤖 Advanced AI Code Reviewer**
 
-**Zero-friction, context-aware code reviews integrated directly into your CI/CD pipeline.**
+A multi-modal, educational code review platform that goes beyond simple linting. This project uses a **Next.js** frontend for an interactive experience, a **NestJS** orchestration layer for API management, and a **Python FastAPI** engine for advanced LLM analysis, security stress-testing, and audio generation.
 
-Sentinel AI is not just another "paste-bin" for code. It is an autonomous code quality platform that connects to your GitHub repository, understands your entire codebase structure via Vector Embeddings (RAG), and provides persona-driven feedback directly on Pull Requests.
+## **📋 Table of Contents**
 
-## **🚀 Why Sentinel? (The Product Vision)**
+* [Architecture](https://www.google.com/search?q=%23-architecture)  
+* [Key Features](https://www.google.com/search?q=%23-key-features)  
+* [Tech Stack](https://www.google.com/search?q=%23-tech-stack)  
+* [Database & Storage](https://www.google.com/search?q=%23-database--storage)  
+* [Authentication](https://www.google.com/search?q=%23-authentication)  
+* [Prerequisites](https://www.google.com/search?q=%23-prerequisites)  
+* [Installation & Setup](https://www.google.com/search?q=%23-installation--setup)  
+  * [1\. Database (PostgreSQL)](https://www.google.com/search?q=%231-database-postgresql)  
+  * [2\. AI Engine (Python)](https://www.google.com/search?q=%232-ai-engine-python-fastapi)  
+  * [3\. Backend (NestJS)](https://www.google.com/search?q=%233-backend-nestjs)  
+  * [4\. Frontend (Next.js)](https://www.google.com/search?q=%234-frontend-nextjs)  
+* [Configuration (BYO-Key)](https://www.google.com/search?q=%23-configuration-byo-key)  
+* [Usage](https://www.google.com/search?q=%23-usage)
 
-Manual copy-pasting is for toys. Professional teams need integration.
-
-* **Zero-Click Workflow:** You push code, we review it. No dashboard toggling required.  
-* **Context-Aware (RAG):** Unlike generic ChatGPT wrappers, Sentinel indexes your repository. If you change a generic interface, Sentinel knows which 50 files might break, even if they aren't in the PR.  
-* **Red-Team Security:** We don't just lint; we try to hack you. The AI generates specific exploit scripts for detected vulnerabilities.  
-* **Audio Debriefs:** Turn complex PR reviews into a 2-minute audio summary for your morning commute.
-
-## **🏗 Architecture & Data Flow**
+## **🏗 Architecture**
 
 The system operates as a sophisticated microservice mesh:
 
@@ -140,4 +145,4 @@ sentinel review \--staged
 
 ## **🛡️ License**
 
-This project is licensed under the MIT License. Enterprise features (SAML SSO, On-Premise Deployment) available under Commercial License.
+This project is licensed under the MIT License.
