@@ -1,98 +1,170 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Sentinel AI Backend - Setup Instructions
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Prerequisites
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- Node.js 20+ and npm
+- Docker and Docker Compose
+- PostgreSQL (via Docker or local installation)
 
-## Description
+## Quick Start
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+### 1. Install Dependencies
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+### 2. Setup Environment Variables
+
+Copy the example environment file:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+Edit `.env` and configure:
+
+- **DATABASE_URL**: PostgreSQL connection string
+- **JWT_ACCESS_SECRET** & **JWT_REFRESH_SECRET**: Generate using `openssl rand -base64 32`
+- **RESEND_API_KEY**: Get from https://resend.com/api-keys
+- **FRONTEND_URL**: Your frontend URL (default: http://localhost:3000)
+- **CSRF_SECRET** & **COOKIE_SECRET**: Generate random strings
+
+### 3. Start PostgreSQL Database
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker-compose up -d
 ```
 
-## Deployment
+This will start:
+- PostgreSQL on port 5432
+- pgAdmin on port 5050 (optional database management UI)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 4. Push Database Schema
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run db:push
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+This creates all the tables in your database.
 
-## Resources
+### 5. Start Development Server
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npm run start:dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+The API will be available at `http://localhost:3001`
 
-## Support
+## API Endpoints
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Authentication
 
-## Stay in touch
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/register` | Register new user | No |
+| GET | `/auth/verify-email?token=xxx` | Verify email | No |
+| POST | `/auth/login` | Login | No |
+| POST | `/auth/refresh` | Refresh access token | Yes (refresh token) |
+| POST | `/auth/logout` | Logout | Yes |
+| POST | `/auth/forgot-password` | Request password reset | No |
+| POST | `/auth/reset-password` | Reset password | No |
+| POST | `/auth/change-password` | Change password | Yes |
+| GET | `/auth/me` | Get current user | Yes |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Database Management
 
-## License
+### Generate Migrations
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm run db:generate
+```
+
+### Push Schema Changes
+
+```bash
+npm run db:push
+```
+
+### Open Drizzle Studio
+
+```bash
+npm run db:studio
+```
+
+## Email Configuration (Resend)
+
+1. Sign up at https://resend.com
+2. Create an API key
+3. Add domain or use test domain
+4. Add API key to `.env` as `RESEND_API_KEY`
+
+## Security Features
+
+✅ **Helmet.js** - HTTP security headers
+✅ **CORS** - Configured for frontend communication  
+✅ **Rate Limiting** - 10 requests per minute per IP
+✅ **CSRF Protection** - Cookie-based tokens
+✅ **JWT Authentication** - Access & refresh tokens
+✅ **Password Hashing** - bcrypt with 12 rounds
+✅ **Email Verification** - Required before login
+✅ **Session Tracking** - Unusual login detection
+
+## Development
+
+```bash
+# Start in development mode
+npm run start:dev
+
+# Run linter
+npm run lint
+
+# Format code
+npm run format
+
+# Run tests
+npm run test
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start:prod
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+
+Make sure PostgreSQL is running:
+```bash
+docker-compose ps
+```
+
+### Email Not Sending
+
+Check `RESEND_API_KEY` in `.env` is correct and domain is verified.
+
+### JWT Errors
+
+Ensure `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` are set and different.
+
+## Project Structure
+
+```
+backend/
+├── src/
+│   ├── auth/           # Authentication module
+│   │   ├── dto/        # Data transfer objects
+│   │   ├── guards/     # Auth guards
+│   │   ├── strategies/ # Passport strategies
+│   │   └── decorators/ # Custom decorators
+│   ├── database/       # Database module
+│   │   └── schema.ts   # Drizzle schema
+│   ├── email/          # Email service
+│   │   └── templates/  # Email templates
+│   └── sessions/       # Session tracking
+├── drizzle/            # Database migrations (auto-generated)
+├── docker-compose.yml  # PostgreSQL container
+└── drizzle.config.ts   # Drizzle ORM config
+```

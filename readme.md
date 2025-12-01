@@ -1,180 +1,143 @@
-# **🤖 Advanced AI Code Reviewer**
+# **🤖 Sentinel AI: Enterprise Code Review Platform**
 
-A multi-modal, educational code review platform that goes beyond simple linting. This project uses a **Next.js** frontend for an interactive experience, a **NestJS** orchestration layer for API management, and a **Python FastAPI** engine for advanced LLM analysis, security stress-testing, and audio generation.
+**Zero-friction, context-aware code reviews integrated directly into your CI/CD pipeline.**
 
-## **📋 Table of Contents**
+Sentinel AI is not just another "paste-bin" for code. It is an autonomous code quality platform that connects to your GitHub repository, understands your entire codebase structure via Vector Embeddings (RAG), and provides persona-driven feedback directly on Pull Requests.
 
-* [Architecture](https://www.google.com/search?q=%23-architecture)  
-* [Key Features](https://www.google.com/search?q=%23-key-features)  
-* [Tech Stack](https://www.google.com/search?q=%23-tech-stack)  
-* [Database & Storage](https://www.google.com/search?q=%23-database--storage)  
-* [Authentication](https://www.google.com/search?q=%23-authentication)  
-* [Prerequisites](https://www.google.com/search?q=%23-prerequisites)  
-* [Installation & Setup](https://www.google.com/search?q=%23-installation--setup)  
-  * [1\. Database (PostgreSQL)](https://www.google.com/search?q=%231-database-postgresql)  
-  * [2\. AI Engine (Python)](https://www.google.com/search?q=%232-ai-engine-python-fastapi)  
-  * [3\. Backend (NestJS)](https://www.google.com/search?q=%233-backend-nestjs)  
-  * [4\. Frontend (Next.js)](https://www.google.com/search?q=%234-frontend-nextjs)  
-* [Configuration (BYO-Key)](https://www.google.com/search?q=%23-configuration-byo-key)  
-* [Usage](https://www.google.com/search?q=%23-usage)
+## **🚀 Why Sentinel? (The Product Vision)**
 
-## **🏗 Architecture**
+Manual copy-pasting is for toys. Professional teams need integration.
 
-The system operates as a four-tier application:
+* **Zero-Click Workflow:** You push code, we review it. No dashboard toggling required.  
+* **Context-Aware (RAG):** Unlike generic ChatGPT wrappers, Sentinel indexes your repository. If you change a generic interface, Sentinel knows which 50 files might break, even if they aren't in the PR.  
+* **Red-Team Security:** We don't just lint; we try to hack you. The AI generates specific exploit scripts for detected vulnerabilities.  
+* **Audio Debriefs:** Turn complex PR reviews into a 2-minute audio summary for your morning commute.
 
-1. **Frontend (Next.js)**: Interactive UI for code submission, chat, audio playback, and logic visualization.  
-2. **Orchestrator (NestJS)**: The primary API Gateway. Handles Auth, User Management, and orchestrates flows between the client, database, and AI engine.  
-3. **Database (PostgreSQL)**: Persists user data, authentication credentials, review history, and chat logs.  
-4. **AI Engine (Python FastAPI)**: The "brain" that interfaces with LLMs to generate personas, security exploits, and audio.
+## **🏗 Architecture & Data Flow**
+
+The system operates as a sophisticated microservice mesh:
+
+graph TD  
+    User((Developer)) \--\>|Pushes Code| GitHub\[GitHub Repo\]  
+    GitHub \--\>|Webhook Event| NestJS\[NestJS Orchestrator\]  
+      
+    subgraph "The Intelligence Layer"  
+        NestJS \--\>|Diff \+ Context| Python\[Python AI Service\]  
+        Python \<--\>|Retrieve Embeddings| VectorDB\[(Postgres pgvector)\]  
+        Python \<--\>|Generate Review| LLM\[OpenAI / Anthropic\]  
+    end  
+      
+    NestJS \--\>|Post Comment| GitHub  
+    NestJS \--\>|Sync Data| DB\[(Postgres Main)\]  
+      
+    User \--\>|View Analytics| NextJS\[Next.js Dashboard\]  
+    NextJS \--\>|API| NestJS
 
 ## **✨ Key Features**
 
-### **🎭 Persona-Based Reviews**
+### **1\. 🐙 The GitHub Bot (CI/CD Integration)**
 
-Select the "vibe" of your review:
+* **Automatic Scanning:** Listens for pull\_request.opened and pull\_request.synchronized events.  
+* **Inline Comments:** Posts specific, line-by-line critiques directly in the GitHub PR interface.  
+* **Smart Diffing:** Only analyzes changed code, but fetches *context* from related files to ensure accuracy.
 
-* **The Roast Master:** Sarcastic, brutally honest feedback.  
-* **The Socrates:** Asks probing questions instead of giving answers.  
-* **The Security Paranoiac:** Treats every line as a vulnerability.
+### **2\. 🧠 Context Engine (RAG)**
 
-### **🛡️ Red-Team Mode**
+* **Repository Indexing:** On installation, the Python service clones the repo, chunks the code, creates embeddings, and stores them in a Vector Database.  
+* **Deep Understanding:** It knows your project's architecture, custom types, and utility functions, drastically reducing false positives.
 
-Actively attempts to "break" your code. Instead of just flagging a vulnerability, the AI generates a specific exploit script (e.g., a SQL injection curl command) to demonstrate the risk.
+### **3\. 🛡️ Red-Team Mode**
 
-### **📊 Logic Visualization**
+* **Active Exploitation:** The AI attempts to generate curl payloads or Python scripts that prove a vulnerability exists (SQLi, XSS, IDOR).
 
-Visual learners rejoice. The system automatically converts complex control flow (nested if/else, loops) into a **Mermaid.js flowchart**, allowing you to see the logic structure at a glance without reading every line.
+### **4\. 💻 CLI Tool (sentinel-cli)**
 
-### **🗣️ Conversational Review**
+* For developers who want a check *before* pushing.  
+* Run npx sentinel review . in your terminal to get an instant analysis of your local changes.
 
-Don't just read the review—chat with it. Highlight a line of code and ask, "Why is this bad?" The system maintains context to answer follow-up questions.
+### **5\. 🎭 Configurable Personas**
 
-### **🎧 Audio Code Walkthroughs**
+* **The Roast Master:** Brutal, sarcastic feedback (Great for breaking bad habits).  
+* **The Senior Engineer:** Strict, focus on scalability and patterns.  
+* **The Security Auditor:** Only cares about vulnerabilities.
 
-Turn code reviews into a podcast. The Python service generates a natural-language script of the critique and converts it to audio, allowing you to listen to feedback on the go.
+### **6\. 🎧 Audio Walkthroughs**
 
-### **🔑 Hybrid API Key System (BYO-Key)**
-
-* **Free Tier:** Uses the system's default model (e.g., Gemini Flash or GPT-3.5).  
-* **Pro Tier:** Users can input their own API Key to unlock GPT-4 or Claude 3.5 Sonnet.
-
-## **🗄️ Database & Storage**
-
-We use **PostgreSQL** (via **Prisma ORM** or **TypeORM**) to handle persistence.
-
-**Key Entities:**
-
-* **Users:** Stores generic user profiles and hashed passwords (bcrypt).  
-* **Reviews:** Stores the raw code snippet, the generated JSON critique, and the unique ID of the review.  
-* **Conversations:** Stores the chat history (user prompts \+ AI responses) linked to a specific Review ID.  
-* **Settings:** Stores user preferences (e.g., default Persona, API Key references).
-
-## **🔐 Authentication**
-
-Authentication is managed by the **NestJS** service using Passport.js and JWT.
-
-1. **Sign Up/Login:** Users authenticate via email/password or OAuth (GitHub/Google).  
-2. **JWT Token:** On success, the backend issues a JSON Web Token.  
-3. **Protected Routes:** All "Save History" and "Pro Feature" endpoints are guarded. The Frontend attaches the token (Authorization: Bearer \<token\>) to requests.  
-4. **Guest Mode:** Users can still generate reviews as "Guests," but their history will not be saved.
+* Converts the text review into a podcast-style MP3 summary using Text-to-Speech, accessible via the Dashboard.
 
 ## **🛠 Tech Stack**
 
-* **Frontend:** Next.js 14 (App Router), Tailwind CSS, React Markdown, Mermaid.js.  
-* **Backend:** NestJS, Socket.io (for chat), Prisma ORM, Passport.js.  
-* **Database:** PostgreSQL.  
-* **AI Engine:** Python 3.9+, FastAPI, LangChain, gTTS.
+* **Frontend (Dashboard):** Next.js 14, Tailwind CSS, Mermaid.js (Visualization).  
+* **Orchestrator:** NestJS, Probot (GitHub Apps), BullMQ (Job Queues).  
+* **AI Engine:** Python FastAPI, LangChain, Sentence-Transformers (Embeddings).  
+* **Database:** PostgreSQL (with pgvector extension for both relational data and vector storage).  
+* **Infrastructure:** Docker Compose.
 
 ## **🚀 Installation & Setup**
 
-### **1\. Database (PostgreSQL)**
+### **Prerequisites**
 
-The easiest way to run the DB is via Docker.
+* Docker & Docker Compose  
+* Node.js v18+ & Python 3.9+  
+* OpenAI API Key (or Anthropic)
 
-\# Run Postgres in background  
-docker run \--name codereview-db \-e POSTGRES\_PASSWORD=mysecretpassword \-e POSTGRES\_DB=codereview \-p 5432:5432 \-d postgres
+### **1\. Spin up Infrastructure**
 
-### **2\. AI Engine (Python FastAPI)**
+We use a single Docker Compose file to spin up Postgres (with Vector support) and Redis.
 
-Navigate to the python service directory:
+docker-compose up \-d
+
+### **2\. Configure the AI Service (Python)**
+
+This service handles RAG (Vector Search) and LLM interaction.
 
 cd ai-service  
 python \-m venv venv  
-source venv/bin/activate  \# Windows: venv\\Scripts\\activate  
-pip install fastapi uvicorn openai langchain gtts python-dotenv
-
-Create a .env file:
-
-OPENAI\_API\_KEY=sk-your-system-key  
-PORT=8000
-
-Start the server:
-
+source venv/bin/activate  
+pip install \-r requirements.txt  
+\# Setup .env with OPENAI\_API\_KEY  
 uvicorn main:app \--reload \--port 8000
 
-### **3\. Backend (NestJS)**
+### **3\. Configure the Orchestrator (NestJS)**
 
-Navigate to the NestJS directory:
+This service handles Webhooks and User Auth.
 
 cd backend  
-npm install
-
-Create a .env file:
-
-AI\_SERVICE\_URL=http://localhost:8000  
-\# Connect to the Docker DB  
-DATABASE\_URL="postgresql://postgres:mysecretpassword@localhost:5432/codereview?schema=public"  
-JWT\_SECRET="super-secret-key"
-
-Start the server:
-
-\# Run migrations (if using Prisma)  
-npx prisma migrate dev  
-\# Start App  
+npm install  
+\# Setup .env with GITHUB\_APP\_ID, GITHUB\_PRIVATE\_KEY, DATABASE\_URL  
 npm run start:dev
 
-### **4\. Frontend (Next.js)**
+### **4\. Setup GitHub App**
 
-Navigate to the frontend directory:
+1. Go to GitHub Developer Settings \-\> New GitHub App.  
+2. Set Webhook URL to your NestJS public URL (use ngrok for local dev: http://your-ngrok.io/webhooks/github).  
+3. Permissions: Pull Requests (Read/Write), Contents (Read).  
+4. Install the App on your repository.
 
-cd frontend  
-npm install mermaid
+## **💻 Usage Workflows**
 
-Create a .env.local file:
+### **Workflow A: The Automated PR (Primary)**
 
-NEXT\_PUBLIC\_API\_URL=http://localhost:3000
+1. Create a branch: git checkout \-b feature/login-fix.  
+2. Make changes and push: git push origin feature/login-fix.  
+3. Open a Pull Request on GitHub.  
+4. **Result:** Within seconds, "Sentinel Bot" comments on your PR with a security analysis and performance score.
 
-Start the client:
+### **Workflow B: The Dashboard (Control Center)**
 
-npm run dev
+1. Log in to http://localhost:3000.  
+2. **Analytics:** View your team's "Code Health" trend over time.  
+3. **Settings:** Configure which files to ignore (glob patterns) or set the default "Persona" for your team.  
+4. **Audio:** Listen to the audio summary of the latest PRs.
 
-## **⚙ Configuration (BYO-Key)**
+### **Workflow C: The CLI (Local)**
 
-The application supports a "Bring Your Own Key" headers strategy.
+\# Install globally  
+npm install \-g @sentinel/cli
 
-1. **Frontend:** Stores the user's API key in localStorage or secure session state.  
-2. Request: When sending a request to NestJS, the frontend adds:  
-   x-custom-api-key: sk-user-123...  
-3. **Backend:** NestJS passes this header to Python.  
-4. **Python Logic:**  
-   def get\_llm\_client(request: Request):  
-       user\_key \= request.headers.get('x-custom-api-key')  
-       if user\_key:  
-           return OpenAI(api\_key=user\_key) \# User pays  
-       return OpenAI(api\_key=os.getenv("SYSTEM\_KEY")) \# App pays
-
-## **💻 Usage**
-
-1. Open http://localhost:3001.  
-2. **Login** (Optional) to save your history.  
-3. Paste a code snippet into the editor.  
-4. **Select a Persona** (e.g., "Roast Master").  
-5. Toggle **Red Team Mode** if you want security exploits.  
-6. Click **Review**.  
-7. **Visualize**: Switch to the "Flowchart" tab to see the Mermaid.js diagram.  
-8. **Chat**: Use the right-hand panel to ask follow-up questions.  
-9. **Listen**: Click the "Play Audio" button to hear the review.
+\# Run in your project root  
+sentinel review \--staged
 
 ## **🛡️ License**
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. Enterprise features (SAML SSO, On-Premise Deployment) available under Commercial License.
