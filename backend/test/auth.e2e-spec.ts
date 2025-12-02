@@ -3,7 +3,13 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DatabaseService } from '../src/database/database.service';
-import { users, emailVerificationTokens, passwordResetTokens, refreshTokens, loginHistory } from '../src/database/schema';
+import {
+  users,
+  emailVerificationTokens,
+  passwordResetTokens,
+  refreshTokens,
+  loginHistory,
+} from '../src/database/schema';
 
 describe('Authentication (e2e)', () => {
   let app: INestApplication;
@@ -23,7 +29,7 @@ describe('Authentication (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Apply same configuration as main.ts
     app.useGlobalPipes(
       new ValidationPipe({
@@ -45,7 +51,7 @@ describe('Authentication (e2e)', () => {
     await databaseService.db.delete(passwordResetTokens);
     await databaseService.db.delete(emailVerificationTokens);
     await databaseService.db.delete(users);
-    
+
     await app.close();
   });
 
@@ -122,12 +128,10 @@ describe('Authentication (e2e)', () => {
   describe('/auth/login (POST)', () => {
     it('should reject login with unverified email', async () => {
       // Create unverified user
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          email: 'unverified@example.com',
-          password: 'TestPass123!@#',
-        });
+      await request(app.getHttpServer()).post('/auth/register').send({
+        email: 'unverified@example.com',
+        password: 'TestPass123!@#',
+      });
 
       await request(app.getHttpServer())
         .post('/auth/login')
@@ -152,7 +156,9 @@ describe('Authentication (e2e)', () => {
       // Check for refresh token cookie
       const cookies = response.headers['set-cookie'];
       expect(cookies).toBeDefined();
-      expect(cookies.some((c: string) => c.startsWith('refresh_token='))).toBe(true);
+      expect(cookies.some((c: string) => c.startsWith('refresh_token='))).toBe(
+        true,
+      );
 
       accessToken = response.body.accessToken;
     });
@@ -190,9 +196,7 @@ describe('Authentication (e2e)', () => {
     });
 
     it('should reject request without token', async () => {
-      await request(app.getHttpServer())
-        .get('/auth/me')
-        .expect(401);
+      await request(app.getHttpServer()).get('/auth/me').expect(401);
     });
 
     it('should reject request with invalid token', async () => {
@@ -212,7 +216,9 @@ describe('Authentication (e2e)', () => {
         .send(testUser);
 
       const cookies = response.headers['set-cookie'];
-      refreshTokenCookie = cookies.find((c: string) => c.startsWith('refresh_token='));
+      refreshTokenCookie = cookies.find((c: string) =>
+        c.startsWith('refresh_token='),
+      );
     });
 
     it('should refresh access token with valid refresh token', async () => {
@@ -225,9 +231,7 @@ describe('Authentication (e2e)', () => {
     });
 
     it('should reject refresh without refresh token', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/refresh')
-        .expect(401);
+      await request(app.getHttpServer()).post('/auth/refresh').expect(401);
     });
   });
 
@@ -386,7 +390,9 @@ describe('Authentication (e2e)', () => {
         });
 
       const cookies = response.headers['set-cookie'];
-      logoutRefreshToken = cookies.find((c: string) => c.startsWith('refresh_token='));
+      logoutRefreshToken = cookies.find((c: string) =>
+        c.startsWith('refresh_token='),
+      );
     });
 
     it('should logout successfully', async () => {
@@ -404,8 +410,10 @@ describe('Authentication (e2e)', () => {
         .set('Cookie', logoutRefreshToken);
 
       const cookies = response.headers['set-cookie'];
-      const refreshCookie = cookies?.find((c: string) => c.startsWith('refresh_token='));
-      
+      const refreshCookie = cookies?.find((c: string) =>
+        c.startsWith('refresh_token='),
+      );
+
       // Cookie should be cleared (empty or expired)
       if (refreshCookie) {
         expect(refreshCookie).toContain('Max-Age=0');
@@ -416,22 +424,20 @@ describe('Authentication (e2e)', () => {
   describe('Rate Limiting', () => {
     it('should enforce rate limiting on login endpoint', async () => {
       const requests = [];
-      
+
       // Make 11 requests (limit is 10)
       for (let i = 0; i < 11; i++) {
         requests.push(
-          request(app.getHttpServer())
-            .post('/auth/login')
-            .send({
-              email: 'ratelimit@example.com',
-              password: 'TestPass123!@#',
-            })
+          request(app.getHttpServer()).post('/auth/login').send({
+            email: 'ratelimit@example.com',
+            password: 'TestPass123!@#',
+          }),
         );
       }
 
       const responses = await Promise.all(requests);
-      const tooManyRequests = responses.filter(r => r.status === 429);
-      
+      const tooManyRequests = responses.filter((r) => r.status === 429);
+
       expect(tooManyRequests.length).toBeGreaterThan(0);
     });
   });

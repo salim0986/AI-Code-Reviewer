@@ -1,5 +1,17 @@
-import { pgTable, uuid, varchar, boolean, timestamp } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  timestamp,
+  integer,
+  text,
+  jsonb,
+  vector,
+} from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+
+// --- EXISTING AUTH TABLES ---
 
 // Users Table
 export const users = pgTable('users', {
@@ -50,7 +62,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// Login History Table (for session tracking and unusual activity detection)
+// Login History Table
 export const loginHistory = pgTable('login_history', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id')
@@ -62,14 +74,79 @@ export const loginHistory = pgTable('login_history', {
   wasNotified: boolean('was_notified').default(false).notNull(),
 });
 
-// Relations
+// --- NEW SENTINEL AI TABLES ---
+
+// API Keys Table
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  key: text('key').unique().notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Repositories Table
+export const repositories = pgTable('repositories', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  githubRepoId: integer('github_repo_id').unique().notNull(),
+  name: text('name').notNull(), // e.g. "facebook/react"
+  ownerId: uuid('owner_id')
+    .references(() => users.id)
+    .notNull(),
+
+  // RAG Status
+  isIndexed: boolean('is_indexed').default(false),
+  lastIndexedAt: timestamp('last_indexed_at'),
+});
+
+// Reviews Table
+export const reviews = pgTable('reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  repoId: uuid('repo_id')
+    .references(() => repositories.id)
+    .notNull(),
+
+  // GitHub Context
+  prNumber: integer('pr_number').notNull(),
+  commitHash: text('commit_hash').notNull(),
+
+  // AI Analysis Output
+  score: integer('score'),
+  summary: text('summary'),
+  securityIssues: jsonb('security_issues'), // Structured list of vulnerabilities
+
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// OPTIONAL: Document Chunks (For RAG/Vector Search)
+export const documentChunks = pgTable('document_chunks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  repoId: uuid('repo_id')
+    .references(() => repositories.id)
+    .notNull(),
+  content: text('content').notNull(),
+  filePath: text('file_path').notNull(),
+  // Vector column (requires pgvector extension enabled in DB)
+  embedding: vector('embedding', { dimensions: 1536 }),
+});
+
+// --- RELATIONS ---
+
 export const usersRelations = relations(users, ({ many }) => ({
+  // Existing relations
   emailVerificationTokens: many(emailVerificationTokens),
   passwordResetTokens: many(passwordResetTokens),
   refreshTokens: many(refreshTokens),
   loginHistory: many(loginHistory),
+
+  // New Sentinel relations
+  apiKeys: many(apiKeys),
+  repositories: many(repositories),
+  reviews: many(reviews),
 }));
 
+// Relation definitions for Auth tables
 export const emailVerificationTokensRelations = relations(
   emailVerificationTokens,
   ({ one }) => ({
@@ -104,7 +181,34 @@ export const loginHistoryRelations = relations(loginHistory, ({ one }) => ({
   }),
 }));
 
-// Types
+// Relation definitions for Sentinel tables
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
+    references: [users.id],
+  }),
+}));
+
+export const repositoriesRelations = relations(
+  repositories,
+  ({ one, many }) => ({
+    owner: one(users, {
+      fields: [repositories.ownerId],
+      references: [users.id],
+    }),
+    reviews: many(reviews),
+  }),
+);
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  repository: one(repositories, {
+    fields: [reviews.repoId],
+    references: [repositories.id],
+  }),
+}));
+
+// --- TYPES ---
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
@@ -121,3 +225,12 @@ export type NewRefreshToken = typeof refreshTokens.$inferInsert;
 
 export type LoginHistory = typeof loginHistory.$inferSelect;
 export type NewLoginHistory = typeof loginHistory.$inferInsert;
+
+export type Repository = typeof repositories.$inferSelect;
+export type NewRepository = typeof repositories.$inferInsert;
+
+export type Review = typeof reviews.$inferSelect;
+export type NewReview = typeof reviews.$inferInsert;
+
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;

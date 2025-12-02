@@ -16,7 +16,7 @@ export class EmailService {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     if (!apiKey) {
       this.logger.warn(
-        'RESEND_API_KEY not found. Email functionality will be disabled.',
+        'RESEND_API_KEY not found. Email functionality will be simulated (logged to console).',
       );
     } else {
       this.resend = new Resend(apiKey);
@@ -26,30 +26,45 @@ export class EmailService {
       'Sentinel AI <onboarding@resend.dev>';
   }
 
+  private async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
+    if (!this.resend) {
+      this.logger.log(`[SIMULATED EMAIL] To: ${to}, Subject: ${subject}`);
+      this.logger.log(`[SIMULATED EMAIL BODY]: ${html}`);
+      return;
+    }
+
+    try {
+      const response = await this.resend.emails.send({
+        from: this.emailFrom,
+        to,
+        subject,
+        html,
+      });
+      this.logger.log(`Email sent to ${to}. ID: ${response.data?.id}`);
+      if (response.error) {
+        this.logger.error(
+          `Resend API Error: ${JSON.stringify(response.error)}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send email to ${to}`, error.stack);
+      throw error;
+    }
+  }
+
   async sendVerificationEmail(
     email: string,
     verificationToken: string,
   ): Promise<void> {
-    const appUrl = this.configService.get<string>('APP_URL');
-    const verificationLink = `${appUrl}/auth/verify-email?token=${verificationToken}`;
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const verificationLink = `${frontendUrl}/auth/verify-email?token=${verificationToken}`;
 
     const { subject, html } = verifyEmailTemplate(verificationLink, email);
-
-    try {
-      await this.resend.emails.send({
-        from: this.emailFrom,
-        to: email,
-        subject,
-        html,
-      });
-      this.logger.log(`Verification email sent to ${email}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send verification email to ${email}`,
-        error.stack,
-      );
-      throw error;
-    }
+    await this.sendEmail(email, subject, html);
   }
 
   async sendPasswordResetEmail(
@@ -57,25 +72,10 @@ export class EmailService {
     resetToken: string,
   ): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+    const resetLink = `${frontendUrl}/auth/reset-password?token=${resetToken}`;
 
     const { subject, html } = resetPasswordTemplate(resetLink, email);
-
-    try {
-      await this.resend.emails.send({
-        from: this.emailFrom,
-        to: email,
-        subject,
-        html,
-      });
-      this.logger.log(`Password reset email sent to ${email}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send password reset email to ${email}`,
-        error.stack,
-      );
-      throw error;
-    }
+    await this.sendEmail(email, subject, html);
   }
 
   async sendLoginNotification(
@@ -87,41 +87,27 @@ export class EmailService {
     },
   ): Promise<void> {
     const { subject, html } = loginNotificationTemplate(email, loginDetails);
-
+    // Don't throw - login notification failure shouldn't block the login
     try {
-      await this.resend.emails.send({
-        from: this.emailFrom,
-        to: email,
-        subject,
-        html,
-      });
-      this.logger.log(`Login notification sent to ${email}`);
+      await this.sendEmail(email, subject, html);
     } catch (error) {
       this.logger.error(
         `Failed to send login notification to ${email}`,
         error.stack,
       );
-      // Don't throw - login notification failure shouldn't block the login
     }
   }
 
   async sendPasswordChangedEmail(email: string): Promise<void> {
     const { subject, html } = passwordChangedTemplate(email);
-
+    // Don't throw - confirmation email failure shouldn't block the password change
     try {
-      await this.resend.emails.send({
-        from: this.emailFrom,
-        to: email,
-        subject,
-        html,
-      });
-      this.logger.log(`Password changed confirmation sent to ${email}`);
+      await this.sendEmail(email, subject, html);
     } catch (error) {
       this.logger.error(
         `Failed to send password changed email to ${email}`,
         error.stack,
       );
-      // Don't throw - confirmation email failure shouldn't block the password change
     }
   }
 }

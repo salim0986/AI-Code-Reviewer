@@ -11,4 +11,7 @@ dependencies = [
     "plotly>=6.5.0",
     "python-gemini-api>=2.4.12",
     "uvicorn>=0.25.0"
+    "langchain==0.1.5",
+    "python-dotenv==1.0.1",
+    "httpx==0.26.0"
 ]

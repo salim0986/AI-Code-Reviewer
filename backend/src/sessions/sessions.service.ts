@@ -24,7 +24,12 @@ export class SessionsService {
       const [lastDifferentLogin] = await this.databaseService.db
         .select()
         .from(loginHistory)
-        .where(and(eq(loginHistory.userId, userId), ne(loginHistory.ipAddress, ipAddress)))
+        .where(
+          and(
+            eq(loginHistory.userId, userId),
+            ne(loginHistory.ipAddress, ipAddress),
+          ),
+        )
         .orderBy(desc(loginHistory.loginAt))
         .limit(1);
 
@@ -57,10 +62,7 @@ export class SessionsService {
         );
       }
     } catch (error) {
-      this.logger.error(
-        `Error tracking login for user ${userId}`,
-        error.stack,
-      );
+      this.logger.error(`Error tracking login for user ${userId}`, error.stack);
       // Don't throw - login tracking failure shouldn't block the login
     }
   }

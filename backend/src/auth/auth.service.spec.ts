@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseService } from '../database/database.service';
 import { EmailService } from '../email/email.service';
@@ -94,9 +99,11 @@ describe('AuthService', () => {
 
       const mockInsert = jest.fn().mockReturnThis();
       const mockValues = jest.fn().mockReturnThis();
-      const mockReturning = jest.fn().mockResolvedValue([
-        { id: 'user-id', email: registerDto.email, isVerified: false },
-      ]);
+      const mockReturning = jest
+        .fn()
+        .mockResolvedValue([
+          { id: 'user-id', email: registerDto.email, isVerified: false },
+        ]);
 
       mockDatabaseService.db.insert = mockInsert;
       mockInsert.mockReturnValue({ values: mockValues });
@@ -123,7 +130,9 @@ describe('AuthService', () => {
       mockFrom.mockReturnValue({ where: mockWhere });
       mockWhere.mockReturnValue({ limit: mockLimit });
 
-      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -152,7 +161,7 @@ describe('AuthService', () => {
       mockWhere.mockReturnValue({ limit: mockLimit });
 
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (mockJwtService.signAsync as jest.Mock)
+      mockJwtService.signAsync
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
 
@@ -175,7 +184,10 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
       expect(result).toHaveProperty('user');
-      expect(bcrypt.compare).toHaveBeenCalledWith(loginDto.password, mockUser.password);
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        loginDto.password,
+        mockUser.password,
+      );
       expect(sessionsService.trackLogin).toHaveBeenCalled();
     });
 
@@ -192,9 +204,9 @@ describe('AuthService', () => {
 
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login(loginDto, '127.0.0.1', 'test-agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(loginDto, '127.0.0.1', 'test-agent'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if email is not verified', async () => {
@@ -212,9 +224,9 @@ describe('AuthService', () => {
 
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      await expect(service.login(loginDto, '127.0.0.1', 'test-agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login(loginDto, '127.0.0.1', 'test-agent'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -320,7 +332,9 @@ describe('AuthService', () => {
       mockFrom.mockReturnValue({ where: mockWhere });
       mockWhere.mockReturnValue({ limit: mockLimit });
 
-      const result = await service.forgotPassword({ email: 'nonexistent@example.com' });
+      const result = await service.forgotPassword({
+        email: 'nonexistent@example.com',
+      });
 
       expect(result).toHaveProperty('message');
       expect(emailService.sendPasswordResetEmail).not.toHaveBeenCalled();
@@ -344,7 +358,8 @@ describe('AuthService', () => {
       const mockSelect = jest.fn().mockReturnThis();
       const mockFrom = jest.fn().mockReturnThis();
       const mockWhere = jest.fn().mockReturnThis();
-      const mockLimit = jest.fn()
+      const mockLimit = jest
+        .fn()
         .mockResolvedValueOnce([mockToken])
         .mockResolvedValueOnce([mockUser]);
 

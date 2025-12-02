@@ -17,7 +17,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    
+
     // Rate limiting
     ThrottlerModule.forRoot([
       {
@@ -25,7 +25,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
         limit: 10, // 10 requests per ttl
       },
     ]),
-    
+
     // Application modules
     DatabaseModule,
     AuthModule,
@@ -48,4 +48,3 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
   ],
 })
 export class AppModule {}
-

@@ -1,4 +1,7 @@
-export const resetPasswordTemplate = (resetLink: string, userEmail: string) => ({
+export const resetPasswordTemplate = (
+  resetLink: string,
+  userEmail: string,
+) => ({
   subject: '🔒 Reset your Sentinel AI password',
   html: `
 <!DOCTYPE html>

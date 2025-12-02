@@ -15,7 +15,26 @@ async function bootstrap() {
   // CORS configuration
   const frontendUrl = configService.get<string>('FRONTEND_URL');
   app.enableCors({
-    origin: frontendUrl || 'http://localhost:3000',
+    origin: (
+      origin: string,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      const allowedOrigins = [
+        frontendUrl,
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+      ];
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/localhost:\d+$/.test(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
@@ -41,8 +60,11 @@ async function bootstrap() {
 
   await app.listen(port);
   console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📧 Email service: ${configService.get<string>('RESEND_API_KEY') ? 'Configured' : 'Not configured'}`);
-  console.log(`🗄️  Database: ${configService.get<string>('DATABASE_URL') ? 'Connected' : 'Not connected'}`);
+  console.log(
+    `📧 Email service: ${configService.get<string>('RESEND_API_KEY') ? 'Configured' : 'Not configured'}`,
+  );
+  console.log(
+    `🗄️  Database: ${configService.get<string>('DATABASE_URL') ? 'Connected' : 'Not connected'}`,
+  );
 }
 bootstrap();
-
